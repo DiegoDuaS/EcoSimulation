@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <omp.h>
+#include <stdbool.h>
 
 #define N 10  // Tamaño del ecosistema (NxN)
 #define PLANT 1
@@ -73,8 +74,114 @@ void imprimir_ecosistema() {
     }
 }
 
+void imprimir_resumen() {
+    int count_plant = 0;
+    int count_herbivore = 0;
+    int count_carnivore = 0;
+    int count_empty = 0;
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            char simbolo;
+            switch (ecosistema[i][j].tipo) {
+                case PLANT: count_plant++; break;
+                case HERBIVORE: count_herbivore++; break;
+                case CARNIVORE: count_carnivore++; break;
+                default:count_empty++;
+            }
+        }
+    }
+
+    // Mostrar resumen
+    printf("\nResumen:\n");
+    printf("Plantas:     %d\n", count_plant);
+    printf("Herbívoros:  %d\n", count_herbivore);
+    printf("Carnívoros:  %d\n", count_carnivore);
+    printf("Vacíos:      %d\n", count_empty);
+}
+
 int es_valida(int x, int y) {
     return x >= 0 && x < N && y >= 0 && y < N;
+}
+
+bool puede_ampliarse(Celda** grid, int filas, int cols, int i, int j) {
+    if (i < 0 || j < 0 || i >= filas || j >= cols)
+        return false;
+
+    if (grid[i][j].tipo == EMPTY) {
+        // Si la celda está vacía, puede crecer directamente
+        return true;
+    }
+
+    if (grid[i][j].tipo == PLANT) {
+        // Revisar las 4 direcciones: Norte, Sur, Este, Oeste
+        for (int k = 0; k < 4; k++) {
+            int ni = i + dx[k];
+            int nj = j + dy[k];
+
+            // Validar que esté dentro del grid
+            if (ni >= 0 && nj >= 0 && ni < filas && nj < cols) {
+                if (grid[ni][nj].tipo == EMPTY) {
+                    return true; // Hay un vecino vacío, puede ampliarse
+                }
+            }
+        }
+    }
+
+    return false; // No es vacía ni tiene vecinos vacíos
+}
+
+
+void plant_update() {
+    Celda copia[N][N];
+
+    // Copiar estado actual
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++)
+            copia[i][j] = ecosistema[i][j];
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            // Reconocer su espacio al rededor
+            Celda* vecinos_V[4];
+            int count_V = 0;
+
+            for (int d = 0; d < 4; d++) {
+                int ni = i + dx[d];
+                int nj = j + dy[d];
+
+                if (ni >= 0 && ni < N && nj >= 0 && nj < N) {
+                    Celda* vecina = &copia[ni][nj];
+
+                    if (vecina->tipo == EMPTY) {
+                        vecinos_V[count_V++] = vecina;
+                    }
+                }
+            }
+
+            if (copia[i][j].tipo == PLANT) {
+                // Muerte al inicio (si no tiene espacio para crecer)
+                if (count_V == 0) {
+                    copia[i][j].tipo = EMPTY;
+                    // printf("Murio en (%d,%d)\n", i, j); debug
+                    continue;  // No hace más nada, pasa al siguiente carnívoro
+                }
+
+                // Reproducción/Expansión
+                for (int d = 0; d < count_V; d++) {
+                    int probabilidad = 30; // 30%
+                    if (rand() % 100 < probabilidad) {
+                        vecinos_V[d]->tipo = PLANT;
+                    }
+                }
+            }
+        }
+        
+    }
+    // Aplicar cambios
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++)
+            ecosistema[i][j] = copia[i][j];
 }
 
 void carnivore_update() {
@@ -172,9 +279,6 @@ void carnivore_update() {
             ecosistema[i][j] = copia[i][j];
 }
 
-
-
-
 int main() {
     srand(time(NULL));
     int num_plantas = 30;
@@ -183,12 +287,19 @@ int main() {
 
     inicializar_ecosistema(num_plantas, num_herviboros, num_carnivoros);
     printf("Ecosistema Inicial:\n");
-    imprimir_ecosistema();
+    printf("Celdas disponibles: %d", N*N);
+    imprimir_resumen();
     for(int i = 1; i <= 10; i++){
-        carnivore_update();
         printf("--------------------------\n");
         printf("**** TICK: %d ****\n", i);
-        imprimir_ecosistema();
+        printf("**** CAMBIO PLANTA ****\n");
+        plant_update();
+        imprimir_resumen();
+        printf("--------------------------\n");
+        printf("**** CAMBIO CARNIVORO ****\n");
+        carnivore_update();
+        imprimir_resumen();
+        
     }
     return 0;
 }
