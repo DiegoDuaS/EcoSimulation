@@ -100,38 +100,6 @@ void imprimir_resumen() {
     printf("Vacíos:      %d\n", count_empty);
 }
 
-int es_valida(int x, int y) {
-    return x >= 0 && x < N && y >= 0 && y < N;
-}
-
-bool puede_ampliarse(Celda** grid, int filas, int cols, int i, int j) {
-    if (i < 0 || j < 0 || i >= filas || j >= cols)
-        return false;
-
-    if (grid[i][j].tipo == EMPTY) {
-        // Si la celda está vacía, puede crecer directamente
-        return true;
-    }
-
-    if (grid[i][j].tipo == PLANT) {
-        // Revisar las 4 direcciones: Norte, Sur, Este, Oeste
-        for (int k = 0; k < 4; k++) {
-            int ni = i + dx[k];
-            int nj = j + dy[k];
-
-            // Validar que esté dentro del grid
-            if (ni >= 0 && nj >= 0 && ni < filas && nj < cols) {
-                if (grid[ni][nj].tipo == EMPTY) {
-                    return true; // Hay un vecino vacío, puede ampliarse
-                }
-            }
-        }
-    }
-
-    return false; // No es vacía ni tiene vecinos vacíos
-}
-
-
 void plant_update() {
     Celda copia[N][N];
 
