@@ -59,19 +59,40 @@ void inicializar_ecosistema(int num_plantas, int num_herviboros, int num_carnivo
 
 // Imprimir el estado del ecosistema
 void imprimir_ecosistema() {
+    // Imprimir encabezado de columnas
+    printf("    ");
+    for (int j = 0; j < N; j++)
+        printf("%2d ", j);
+    printf("\n");
+
+    // Línea superior
+    printf("   +");
+    for (int j = 0; j < N; j++)
+        printf("---");
+    printf("+\n");
+
     for (int i = 0; i < N; i++) {
+        printf("%2d |", i); // Índice de fila
+
         for (int j = 0; j < N; j++) {
             char simbolo;
             switch (ecosistema[i][j].tipo) {
-                case PLANT: simbolo = 'P'; break;
+                case PLANT:     simbolo = 'P'; break;
                 case HERBIVORE: simbolo = 'H'; break;
                 case CARNIVORE: simbolo = 'C'; break;
-                default: simbolo = 'V'; // Vacío
+                default:        simbolo = ' '; break;
             }
-            printf("%c ", simbolo);
+            printf(" %c ", simbolo);
         }
-        printf("\n");
+
+        printf("|\n");
     }
+
+    // Línea inferior
+    printf("   +");
+    for (int j = 0; j < N; j++)
+        printf("---");
+    printf("+\n");
 }
 
 void imprimir_resumen() {
@@ -98,6 +119,10 @@ void imprimir_resumen() {
     printf("Herbívoros:  %d\n", count_herbivore);
     printf("Carnívoros:  %d\n", count_carnivore);
     printf("Vacíos:      %d\n", count_empty);
+}
+
+int es_valida(int x, int y) {
+    return x >= 0 && x < N && y >= 0 && y < N;
 }
 
 void plant_update() {
@@ -267,7 +292,8 @@ int main() {
         printf("**** CAMBIO CARNIVORO ****\n");
         carnivore_update();
         imprimir_resumen();
-        
     }
+    printf("\nEcosistema Final:\n");
+    imprimir_ecosistema();
     return 0;
 }
