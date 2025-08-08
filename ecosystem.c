@@ -10,8 +10,8 @@
 #define CARNIVORE 3
 #define EMPTY 0
 #define MAX_TICKS_SIN_COMER 3
-#define ENERGIA_REPRODUCCION 3
-#define ENERGIA_NUEVO 2
+#define ENERGIA_REPRODUCCION 2
+#define ENERGIA_NUEVO 3
 #define EDAD_MAXIMA 10
 
 // Estructura para la celda del ecosistema
@@ -208,7 +208,7 @@ void plant_update() {
 
             // Reproducción/expansión: escribir en copia (cada destino protegido)
             for (int d = 0; d < count_V; d++) {
-                if (rand_r(&seed) % 100 < 30) { // 30%
+                if (rand() % 100 < 30) { // 30%
                     int ni = vecinos_V[d][0];
                     int nj = vecinos_V[d][1];
                     // bloquear destino y origen para escribir consistentemente
@@ -547,7 +547,7 @@ int main() {
     // Ajusta estos números (serán caps a N*N)
     int num_plantas = 300;
     int num_herviboros = 200;
-    int num_carnivoros = 50;
+    int num_carnivoros = 75;
 
     int num_TICKS = 10;
 
