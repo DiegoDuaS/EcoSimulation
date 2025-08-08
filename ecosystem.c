@@ -11,7 +11,7 @@
 #define EMPTY 0
 #define MAX_TICKS_SIN_COMER 3
 #define ENERGIA_REPRODUCCION 2
-#define ENERGIA_NUEVO 3
+#define ENERGIA_NUEVO 2
 #define EDAD_MAXIMA 10
 
 // Estructura para la celda del ecosistema
@@ -65,14 +65,15 @@ int es_valida(int x, int y) {
 // Función para inicializar la matriz (capping total a N*N)
 void inicializar_ecosistema(int num_plantas, int num_herviboros, int num_carnivoros) {
     // Inicializar todo vacío
-    for (int i = 0; i < N; i++)
+    #pragma omp parallel for collapse(2)
+    for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             ecosistema[i][j].tipo = EMPTY;
             ecosistema[i][j].energia = 0;
             ecosistema[i][j].ticks_sin_comer = 0;
             ecosistema[i][j].edad = 0;
         }
-
+    }
     int total = num_plantas + num_herviboros + num_carnivoros;
     if (total > N * N) total = N * N; // evitar bucle infinito
 
@@ -556,14 +557,34 @@ int main() {
     printf("Celdas disponibles: %d\n", N * N);
     imprimir_resumen();
     
-    for (int t = 1; t <= num_TICKS; t++) {
-        printf("--------------------------\n");
-        printf("**** TICK: %d ****\n", t);
-        plant_update();
-        carnivore_update();
-        herbivore_update();
-        imprimir_resumen();
-        imprimir_ecosistema();
+    #pragma omp parallel
+    {
+        for (int t = 0; t < num_TICKS; t++) {
+
+            // Herbívoros primero
+            #pragma omp single
+            herbivore_update();
+
+            // Plantas y carnívoros al mismo tiempo
+            #pragma omp sections
+            {
+                #pragma omp section
+                plant_update();
+
+                #pragma omp section
+                carnivore_update();
+            }
+
+            // Impresión (solo un hilo)
+            #pragma omp single
+            {
+                imprimir_resumen();
+                imprimir_ecosistema();
+            }
+
+            // Sincronización antes del siguiente tick
+            #pragma omp barrier
+        }
     }
 
     // Destruir locks
